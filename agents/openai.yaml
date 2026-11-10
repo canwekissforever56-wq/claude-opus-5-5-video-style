@@ -1,4 +1,4 @@
 interface:
   display_name: "Opus 5.5 — 86 Styles in Motion"
-  short_description: "主题细化与内容确认在先，86种风格及扩展选择在后，样片获批再制作全片"
-  default_prompt: "使用 $claude-opus-5-5-new 制作一期讲解奥卡姆剃刀的视频。"
+  short_description: "先生成并确认三份内容文档，再选风格、做样片与全片"
+  default_prompt: "使用 $claude-opus-5-5-new 制作一期讲解奥卡姆剃刀的视频，先完成内容文档供我确认。"

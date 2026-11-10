@@ -1,52 +1,62 @@
 # Opus 5.5 — 86 Styles in Motion
 
-A Codex skill for turning a short topic into a styled HTML explainer: choose a visual direction, review a 20-second sample, then approve the complete animation.
+一个面向 Codex 的讲解视频制作 Skill：用户只需给出主题或已有口播，它会先核实事实、细化内容并等待确认，再从 86 种基础风格与 2 种扩展风格中选择视觉方向，制作约 20 秒 HTML 样片，获批后完成全片。
 
-## Workflow
+An explainer-video skill for Codex. Start with only a topic or existing narration; the workflow researches facts, develops and confirms the story, selects a visual style, produces an approximately 20-second HTML sample, and expands it into the complete film only after approval.
 
-1. Describe your topic in one sentence.
-2. Review three recommended styles using their original reference images.
-3. Choose a style. The agent studies its visual language, source code, and motion over time.
-4. Watch an approximately 20-second HTML sample.
-5. Approve the sample before the agent develops the full animation.
+## 核心流程 / Workflow
 
-The local collection supports the original 86 visual styles plus curated Talking Head (#87) and Vibe Knowledge Film (#88) extensions, a bilingual three-column gallery, reference video playback, and copyable style names. The workflow prioritizes continuous explanatory motion, readable text, and real source materials where appropriate. It does not require a paid image-generation or narration service.
+1. **给出主题**：一句话即可，不要求用户先写脚本。
+2. **事实研究与内容细化**：明确受众、目标、钩子、核心问题、解释结构、案例、边界、结尾和交付要求。
+3. **确认内容**：先交付并确认 `CONTENT_BRIEF.md`、`FACT_CHECK.md` 和风格无关的 `STORYBOARD.md` 初稿。
+4. **选择风格**：基于已确认内容，从完整风格索引中推荐三个有明显差异的方案，并展示原始参考图；也可以直接采用用户已指定的风格。
+5. **约 20 秒 HTML 样片**：研究所选风格的图片、参考视频和源码，制作可播放、暂停、拖动和重播的连续动画样片。
+6. **样片确认后制作全片**：沿用通过的视觉规范完成完整 HTML，检查时间轴、事实逻辑、动效、可读性与声音。
+7. **按需导出 MP4**：HTML 是默认交付；只有用户要求时才导出视频文件。
 
-## Talking Head / 口播类
+内容确认先于风格确认，风格确认先于样片确认。未获得相应确认时，不提前扩展全片。
 
-Based on 阿朱’s own approved 150-second episode, this extension includes a browsable finished reference, a 20.733-second excerpt, the complete editable HTML project, and historical edit/subtitle evidence. It combines presenter picture-in-picture/full-frame transitions, real supporting materials, continuous explanatory motion, and selective action-synced sound. The reference is a user-created work, not attributed to Opus 5.5.
+### 硬性门禁 / Deterministic Gates
 
-Ask `$claude-opus-5-5-new 用口播类风格剪辑这段视频，先做20秒样片。` with your footage. Explicitly choosing this style skips the three-style selection; sample approval is still required before the full video. See `references/talking-head.md`. The skill display title and invocation remain unchanged.
+关键确认不再只依赖长篇文字说明。新作品可用 `workflow_gate.py` 初始化三份内容文档并记录确认状态：
 
-## Vibe Knowledge Film / Vibe 知识讲解
+```sh
+python scripts/workflow_gate.py init --output ../my-film --topic "My topic"
+python scripts/workflow_gate.py confirm-content --output ../my-film --evidence "用户确认原话"
+python scripts/workflow_gate.py check --output ../my-film --next style
+```
 
-Style #88 integrates [HeyChengC/vibe-knowledge-film](https://github.com/HeyChengC/vibe-knowledge-film) as one isolated entry with two variants: **C Nocturne / 夜曲** for abstract mechanisms, and **B Fable / 寓言** for behavior and illustrated stories. Its explanation method, storyboard guidance, Canvas engine, local fonts, and author-created examples are loaded only after this style is selected. Other styles retain their own production rules.
+`check --next style` 只有在 `CONTENT_BRIEF.md`、`FACT_CHECK.md`、`STORYBOARD.md` 已填实且内容确认已记录时才会通过。脚本还支持 `record-style`、`confirm-sample`，以及进入 `sample`、`full` 阶段前的检查。
 
-The workflow still uses an approximately **20-second HTML sample**, followed by approval before the full film. The upstream extra approval stages are not added. Create a self-contained project with `python scripts/new_vibe_film.py --output ../my-film/sample --world C --title "My topic"`; replace the clearly marked scaffold with your own story. `--world B` selects Fable; `--example` copies the credited original reference for study. Optional `--audio path/to/track.mp3` copies a local audio track and synchronizes it with the player.
+## 风格库 / Style Library
 
-The gallery's two silent 800×450/10fps clips are converted from the author's GIF previews; the editable source examples are about 33 seconds and run at their original 30fps. Use those HTML sources to study motion in detail. New project scaffolds explicitly use 60fps, which is not a claim of completed MP4 export. Model provenance is not independently verified as Opus 5.5. See `references/vibe-knowledge-film.md`.
+- **#1–#86**：Futurepedia AI Style Atlas 的 86 种视觉风格，每种包含原始封面、两段参考视频、完整提示词、元数据与参考源码。
+- **#87 口播类 / Talking Head**：适用于已有口播、人物小窗、精剪和人物旁解释动效。原声、字幕与精剪时间映射决定动画时序，不用自动文案替换原话。
+- **#88 Vibe 知识讲解 / Vibe Knowledge Film**：包含 **C Nocturne / 夜曲** 与 **B Fable / 寓言** 两个子方案；只有选中该风格后才加载其导演方法、本地引擎和示例源码。
 
-## Install locally
+离线图库位于 `assets/gallery/index.html`，提供中英文名称、搜索、分类、原始示例图与参考视频。图库用于浏览参考，不替代内容确认或样片确认。
 
-Requires Codex with local file access, Python 3.9+ for the helper scripts, and a supported browser for preview and visual checks. Individual animation projects may require additional tools.
+## 安装 / Install
 
-Clone the repository into your Codex skills directory:
+需要 Codex、本地文件访问权限、Python 3.9+ 和可用于预览 HTML 的现代浏览器。部分作品可能需要额外的渲染或音视频工具。
 
 ```sh
 git clone https://github.com/canwekissforever56-wq/claude-opus-5-5-video-style.git ~/.codex/skills/claude-opus-5-5-new
 ```
 
-If you use a custom `CODEX_HOME`, install under its `skills` directory instead. If the target folder already exists, choose a separate location rather than overwriting it. The display title is **Opus 5.5 — 86 Styles in Motion**; invoke it as `$claude-opus-5-5-new`.
+如果使用自定义 `CODEX_HOME`，请安装到其 `skills` 目录。目标文件夹已存在时，请先备份或使用其他目录，不要直接覆盖。
+
+调用示例：
 
 ```text
-$claude-opus-5-5-new Make an explainer about Occam's razor.
+$claude-opus-5-5-new 制作一支让普通人看懂 AI 为什么会出现幻觉的讲解视频
 ```
 
-The instructions default to Chinese and 16:9, but the user's requested language and aspect ratio take precedence. HTML is the default deliverable; MP4 export is performed only when requested.
+默认使用中文、16:9、面向普通观众；用户当次指定的语言、画幅、时长、声音和交付形式优先。
 
-## Inspect the references
+## 常用命令 / Utilities
 
-Run from this folder:
+在 Skill 根目录运行：
 
 ```sh
 python scripts/atlas.py --list
@@ -57,28 +67,52 @@ python scripts/atlas.py --verify
 python scripts/gallery.py --output ../styles-gallery
 ```
 
-Open `assets/gallery/index.html` to browse the bundled local gallery, or serve an exported gallery with a local HTTP server. Reference scripts are study material, not automatically executed installation code.
+- `atlas.py --list`：列出风格。
+- `atlas.py --id <编号>`：定位指定风格的材料。
+- `atlas.py --verify`：校验基础风格与扩展风格的文件和哈希。
+- `gallery.py`：导出一份可独立打开的本地风格图库。
 
-## Files
+## 目录结构 / Files
 
-- `SKILL.md`: production workflow and approval stages.
-- `agents/openai.yaml`: display metadata and example invocation.
-- `references/`: style selection, research, and delivery guidance.
-- `scripts/`: atlas inspection and gallery export helpers.
-- `assets/atlas/`: original reference collection with source metadata and hashes.
-- `assets/gallery/`: local gallery with images and example videos.
-- `assets/custom/talking-head/`: self-contained HTML reference, preview videos, editing evidence, and file hashes. The original 1080p master and untrimmed camera footage are not bundled.
+- `SKILL.md`：核心制作流程、确认节点与跨回合续做规则。
+- `agents/openai.yaml`：Codex 界面元数据与默认调用示例。
+- `references/content-planning.md`：事实研究、内容策划与确认方法。
+- `references/style-index.json`：86 种基础风格精简索引。
+- `references/custom-style-index.json`：#87 与 #88 扩展风格索引。
+- `references/style-selection.md`：风格图片展示与选择流程。
+- `references/style-research.md`：选定风格后的素材研究方法。
+- `references/motion-delivery.md`：样片与成片验收标准。
+- `references/talking-head.md`：口播类制作指南。
+- `references/vibe-knowledge-film.md`：Vibe 知识讲解专属指南。
+- `scripts/`：阶段门禁、风格定位、图库导出与 Vibe 项目脚手架工具。
+- `assets/atlas/`：86 种风格原始参考集合、来源与哈希清单。
+- `assets/gallery/`：可离线浏览的风格图库。
+- `assets/custom/talking-head/`：口播类参考、可编辑 HTML、预览视频与制作证据。
+- `assets/custom/vibe-knowledge-film/`：本地引擎、字体、示例、播放器和授权文件。
 
-- `assets/custom/vibe-knowledge-film/`: isolated engine, local fonts, two author-created examples, silent gallery clips, portable player, licenses and hashes.
+## 口播类说明 / Talking Head
 
-## Credits
+#87 基于阿朱本人已确认的 150 秒作品，包含可浏览成片参考、20.733 秒节选、完整可编辑 HTML 项目和历史剪辑/字幕证据。参考作品属于用户自制内容，不归因于 Opus 5.5。嵌入的第三方素材保留各自来源说明。
 
-The original 86 styles are from [Futurepedia — AI Style Atlas](https://www.futurepedia.io/resources/ai-style-atlas/view).
+明确选择口播类后，可以跳过三风格推荐，但仍需先确认讲述目标、素材范围与剪辑边界，并在全片制作前确认约 20 秒样片。
 
-The Talking Head reference is by 阿朱. Embedded third-party materials retain their source credits in `assets/custom/talking-head/source/assets/sources.txt` and the nested example credit files.
+## Vibe 知识讲解说明 / Vibe Knowledge Film
 
-Vibe Knowledge Film is by HeyChengC. Its MIT license and font OFL notices are preserved in `assets/custom/vibe-knowledge-film/`. Materials expressly excluded by the upstream license are not bundled.
+#88 集成 [HeyChengC/vibe-knowledge-film](https://github.com/HeyChengC/vibe-knowledge-film) 作为独立风格条目。夜曲适合抽象机制与知识拆解，寓言适合行为、角色和插画叙事。它不改变其他风格的制作规则。
 
-## 中文说明
+可以用脚本创建自包含项目：
 
-一句选题 → 推荐三个风格并直接展示示例图 → 用户选定 → 制作约 20 秒 HTML 样片 → 用户确认 → 完整动画。默认保留两次确认，不提前扩展全片。
+```sh
+python scripts/new_vibe_film.py --output ../my-film/sample --world C --title "My topic"
+```
+
+使用 `--world B` 选择寓言，`--example` 复制带署名的原始参考，`--audio path/to/track.mp3` 导入本地音乐。示例项目和图库视频仅用于研究运动语言，不代表已经完成 MP4 导出。
+
+## 来源与授权 / Credits
+
+- 原始 86 种风格来自 [Futurepedia — AI Style Atlas](https://www.futurepedia.io/resources/ai-style-atlas/view)。
+- 口播类参考由阿朱制作；第三方素材来源记录在 `assets/custom/talking-head/source/assets/sources.txt` 及嵌套示例的说明文件中。
+- Vibe Knowledge Film 由 HeyChengC 制作；MIT License 与字体 OFL 文件保存在 `assets/custom/vibe-knowledge-film/`。
+- 更完整的第三方说明见 `THIRD_PARTY_NOTICES.md`。
+
+本地收录参考素材不等于获得对外再分发许可。使用与发布前请遵守各素材的原始授权条款。
